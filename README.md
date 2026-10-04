@@ -1,6 +1,6 @@
 # IncreasedStackLimit-Latest
 
-A small [MelonLoader](https://github.com/LavaGang/MelonLoader) mod for **Schedule I** that raises the stack limit of products and the supplies you use to make them. It's built for the current **0.4.7 beta (IL2CPP)**.
+A small [MelonLoader](https://github.com/LavaGang/MelonLoader) mod for **Schedule I** that raises item stack limits to 250. It's built for the current **0.4.7 beta (IL2CPP)**.
 
 It started as a rewrite of froggy's *IncreasedStackLimit*, which no longer behaves correctly on 0.4.7. The main difference is *where* the limit gets changed:
 - **This mod** edits each item definition's own stack limit.
@@ -9,22 +9,27 @@ It started as a rewrite of froggy's *IncreasedStackLimit*, which no longer behav
 The game reads the definition directly for deliveries, the delivery app's "fits in vehicle" check, the shop cart and dead drops. Changing it there means every part of the game agrees on the new limit.
 
 ## What it changes
-Only the items that make inventory management painful, matched by item **type**. That means new mixes, and items added by other mods that use the same types, are covered automatically.
+Every item that stacks gets a limit of 250. Items are grouped by **type**, and each group has its own setting. New mixes, and items added by other mods that use the same types, are covered automatically.
 
-| Type | Examples | Game default | Mod default |
-|---|---|---|---|
-| Products | weed, meth, cocaine, shrooms, every mix you create (loose or packaged) | 20 | 100 |
-| Packaging | baggies, jars, bricks | 10–20 | 100 |
-| Mix ingredients | Cuke, Banana, Mega Bean, Energy Drink… | 20 | 100 |
-| Precursors | coca leaf, cocaine base, pseudo, liquid meth | 10–20 | 100 |
-| Chemicals | acid, phosphorus, RDX | 10 | 100 |
+| Group | Examples | Game default |
+|---|---|---|
+| Products | weed, meth, cocaine, shrooms, every mix you create (loose or packaged) | 20 |
+| Packaging | baggies, jars, bricks | 10–20 |
+| Mix ingredients | Cuke, Banana, Mega Bean, Energy Drink… | 20 |
+| Precursors | coca leaf, cocaine base, pseudo, liquid meth | 10–20 |
+| Seeds | weed and coca seeds | 10 |
+| Soil | soil, long life soils, mushroom substrate | 10 |
+| Grow additives | fertilizer, PGR, Speed Grow | 10 |
+| Shroom supplies | spore syringes, shroom spawn | 10 |
+| Placeables | furniture, stations, lights, storage, pots, grow tents | 10–20 |
+| Everything else | acid, phosphorus, RDX, grain bags, trash bags, spray paint… | 10 |
 
-Everything else keeps its normal limit on purpose:
-- **Equipment and tools:** watering can, pliers and similar items stay at 1.
-- **Placeables:** furniture, stations, lights, pots, grow tents and sprinklers.
-- **Grow and shroom supplies:** soil, fertilizer, PGR, speed grow, seeds, spores, spawn and grain bags. These are used through equip-and-pour tasks, which don't expect big stacks.
+Never changed:
+- **Guns and melee weapons:** detected from the item's equipped weapon.
+- **Ammo:** whatever a gun loads, for example shotgun shells. Raising it causes a bug. It's detected from the guns themselves, so ammo from modded guns is skipped too.
+- **Items that don't stack (limit 1):** tools like the watering can and pliers, clothing, skateboards and cash.
 
-A limit is never lowered. Items that normally don't stack are never touched.
+A limit is never lowered.
 
 Optional, off by default: mixing station capacity, mixing time per item, and drying rack capacity.
 
@@ -47,15 +52,22 @@ Settings are in `UserData/IncreasedStackLimit-Latest.cfg`, with a comment on eac
 | Setting | Default | What it does |
 |---|---|---|
 | `Enabled` | `true` | Off restores every original stack limit. |
-| `ProductLimit` | `100` | Products. `0` keeps the game's value. |
-| `PackagingLimit` | `100` | Packaging. `0` keeps the game's value. |
-| `MixerLimit` | `100` | Mix ingredients. `0` keeps the game's value. |
-| `PrecursorLimit` | `100` | Precursors. `0` keeps the game's value. |
-| `ChemicalLimit` | `100` | Chemicals. `0` keeps the game's value. |
+| `ProductLimit` | `250` | Products. |
+| `PackagingLimit` | `250` | Packaging. |
+| `MixerLimit` | `250` | Mix ingredients. |
+| `PrecursorLimit` | `250` | Precursors. |
+| `SeedLimit` | `250` | Seeds. |
+| `SoilLimit` | `250` | Soil. |
+| `AdditiveLimit` | `250` | Grow additives. |
+| `ShroomSupplyLimit` | `250` | Shroom supplies. |
+| `PlaceableLimit` | `250` | Placeables. |
+| `OtherLimit` | `250` | Everything else. |
 | `MixingStationCapacity` | `0` | Max items per mix. `0` keeps the game's value. |
 | `MixTimePerItem` | `0` | Mixing minutes per item. `0` keeps the game's value. |
 | `DryingRackCapacity` | `0` | Max items on a drying rack. `0` keeps the game's value. |
 | `LogItems` | `false` | Log every item's type and old/new limit. |
+
+Set a group limit to `0` to keep the game's values for that group.
 
 ## Good to know
 - **Multiplayer:** everyone in the lobby should run the mod with the same settings. Stack limits are checked on both the host and the clients.

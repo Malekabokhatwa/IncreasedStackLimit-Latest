@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using MelonLoader;
 using MelonLoader.Utils;
 
@@ -17,11 +19,7 @@ internal static class Settings
 
     private static MelonPreferences_Entry<bool> _enabled;
     private static MelonPreferences_Entry<bool> _logItems;
-    private static MelonPreferences_Entry<int> _productLimit;
-    private static MelonPreferences_Entry<int> _packagingLimit;
-    private static MelonPreferences_Entry<int> _mixerLimit;
-    private static MelonPreferences_Entry<int> _precursorLimit;
-    private static MelonPreferences_Entry<int> _chemicalLimit;
+    private static readonly Dictionary<ItemGroup, MelonPreferences_Entry<int>> _limits = new();
     private static MelonPreferences_Entry<int> _mixingStationCapacity;
     private static MelonPreferences_Entry<int> _mixTimePerItem;
     private static MelonPreferences_Entry<int> _dryingRackCapacity;
@@ -39,16 +37,21 @@ internal static class Settings
         _enabled = cat.CreateEntry("Enabled", true, "Enabled",
             "Turn the mod on or off. Off restores every original stack limit.");
 
-        _productLimit = cat.CreateEntry("ProductLimit", 100, "Products",
-            "Weed, meth, cocaine, shrooms and every mix you create, loose or packaged (game default 20). 0 = game default.");
-        _packagingLimit = cat.CreateEntry("PackagingLimit", 100, "Packaging",
-            "Baggies, jars and bricks (game default 10-20). 0 = game default.");
-        _mixerLimit = cat.CreateEntry("MixerLimit", 100, "Mix ingredients",
-            "Mixing ingredients such as Cuke, Banana or Mega Bean (game default 20). 0 = game default.");
-        _precursorLimit = cat.CreateEntry("PrecursorLimit", 100, "Precursors",
-            "Quality-graded ingredients: coca leaf, cocaine base, pseudo, liquid meth (game default 10-20). 0 = game default.");
-        _chemicalLimit = cat.CreateEntry("ChemicalLimit", 100, "Chemicals",
-            "Plain ingredients such as acid, phosphorus and RDX (game default 10). 0 = game default.");
+        AddLimit(cat, ItemGroup.Product, "ProductLimit", "Products",
+            "Weed, meth, cocaine, shrooms and every mix you create, loose or packaged (game default 20).");
+        AddLimit(cat, ItemGroup.Packaging, "PackagingLimit", "Packaging", "Baggies, jars and bricks (game default 10-20).");
+        AddLimit(cat, ItemGroup.Mixer, "MixerLimit", "Mix ingredients", "Cuke, Banana, Mega Bean and the other mixers (game default 20).");
+        AddLimit(cat, ItemGroup.Precursor, "PrecursorLimit", "Precursors",
+            "Quality-graded ingredients: coca leaf, cocaine base, pseudo, liquid meth (game default 10-20).");
+        AddLimit(cat, ItemGroup.Seed, "SeedLimit", "Seeds", "Weed and coca seeds (game default 10).");
+        AddLimit(cat, ItemGroup.Soil, "SoilLimit", "Soil", "Soil, long life soils and mushroom substrate (game default 10).");
+        AddLimit(cat, ItemGroup.Additive, "AdditiveLimit", "Grow additives", "Fertilizer, PGR, Speed Grow (game default 10).");
+        AddLimit(cat, ItemGroup.ShroomSupply, "ShroomSupplyLimit", "Shroom supplies", "Spore syringes and shroom spawn (game default 10).");
+        AddLimit(cat, ItemGroup.Placeable, "PlaceableLimit", "Placeables",
+            "Furniture, decorations, stations, lights, storage, pots, grow tents, sprinklers (game default 10-20).");
+        AddLimit(cat, ItemGroup.Other, "OtherLimit", "Everything else",
+            "Any other stackable item: acid, phosphorus, RDX, grain bags, trash bags, spray paint... (game default 10). " +
+            "Guns, melee weapons, their ammo and items that don't stack are never changed.");
 
         _mixingStationCapacity = cat.CreateEntry("MixingStationCapacity", 0, "Mixing station capacity",
             "Max items per mix. 0 = game default.");
@@ -66,15 +69,10 @@ internal static class Settings
         _lastWrite = LastWrite();
     }
 
-    internal static int LimitFor(ItemGroup group) => group switch
-    {
-        ItemGroup.Product => _productLimit.Value,
-        ItemGroup.Packaging => _packagingLimit.Value,
-        ItemGroup.Mixer => _mixerLimit.Value,
-        ItemGroup.Precursor => _precursorLimit.Value,
-        ItemGroup.Chemical => _chemicalLimit.Value,
-        _ => 0
-    };
+    private static void AddLimit(MelonPreferences_Category cat, ItemGroup group, string key, string name, string description) =>
+        _limits[group] = cat.CreateEntry(key, 250, name, description + " 0 = game default.");
+
+    internal static int LimitFor(ItemGroup group) => _limits.TryGetValue(group, out var entry) ? entry.Value : 0;
 
     /// <summary>The group's limit, but never below the original and never for items that don't stack.</summary>
     internal static int Compute(ItemGroup group, int original)
@@ -107,7 +105,6 @@ internal static class Settings
     {
         if (!_enabled.Value)
             return "disabled";
-        return $"products {_productLimit.Value}, packaging {_packagingLimit.Value}, mixers {_mixerLimit.Value}, " +
-               $"precursors {_precursorLimit.Value}, chemicals {_chemicalLimit.Value}";
+        return string.Join(", ", _limits.Select(kv => $"{kv.Key} {kv.Value.Value}"));
     }
 }
