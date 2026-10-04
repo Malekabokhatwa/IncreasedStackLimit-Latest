@@ -1,0 +1,14 @@
+# Decompiled game code and third-party mods: local reference only, never publish
+reference/game-src-*/
+reference/*-decompiled/
+reference/removed-mods/
+
+# Build output
+bin/
+obj/
+*.user
+.vs/
+.idea/
+MODLOG.md
+MODDING_PLAN.md
+reference/
