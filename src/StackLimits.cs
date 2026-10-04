@@ -1,17 +1,34 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using Il2CppScheduleOne;
+using Il2CppScheduleOne.Core.Items.Framework;
 using Il2CppScheduleOne.ItemFramework;
+using Il2CppScheduleOne.Product;
+using Il2CppScheduleOne.Product.Packaging;
 using Object = UnityEngine.Object;
 
 namespace IncreasedStackLimitLatest;
 
+/// <summary>Item types the mod changes. Anything else keeps its game limit.</summary>
+internal enum ItemGroup
+{
+    None,
+    Product,
+    Packaging,
+    Mixer,
+    Precursor,
+    Chemical
+}
+
 /// <summary>
 /// Rewrites <c>StackLimit</c> on item definitions. The definition field is what the game reads everywhere
 /// (inventory, storage, deliveries, shop cart, dead drops), so changing it covers every code path.
+/// Items are matched by definition type, so new mixes and modded items of the same type are included.
 /// </summary>
 internal static class StackLimits
 {
+    private const string PlainStorableType = "ScheduleOne.ItemFramework.StorableItemDefinition";
+
     private sealed class Record
     {
         public int Original;
@@ -55,16 +72,38 @@ internal static class StackLimits
             Records[id] = record;
         }
 
-        int target = Settings.Enabled && !Settings.IsExcluded(id) ? Settings.Compute(record.Original) : record.Original;
+        var group = Classify(def, record.TypeName);
+        int target = Settings.Enabled && group != ItemGroup.None ? Settings.Compute(group, record.Original) : record.Original;
         record.Applied = target;
+
+        if (Settings.LogItems)
+            Core.Log.Msg($"ITEM {id} | {group} | {record.TypeName} | {record.Original} -> {target}");
 
         if (def.StackLimit == target)
             return false;
 
-        if (Settings.LogItems)
-            Core.Log.Msg($"{id}: {record.Original} -> {target}");
         def.StackLimit = target;
         return true;
+    }
+
+    /// <summary>
+    /// Most specific type first: ProductDefinition derives from PropertyItemDefinition.
+    /// Soil, additives, seeds, spores and spawn, placeables, equipment, water containers, clothing and cash are
+    /// deliberately not matched: they are used through equip/pour tasks or carry per-item state.
+    /// </summary>
+    private static ItemGroup Classify(ItemDefinition def, string typeName)
+    {
+        if (def.TryCast<ProductDefinition>() != null)
+            return ItemGroup.Product;
+        if (def.TryCast<PackagingDefinition>() != null)
+            return ItemGroup.Packaging;
+        if (def.TryCast<PropertyItemDefinition>() != null)
+            return ItemGroup.Mixer;
+        if (def.TryCast<QualityItemDefinition>() != null)
+            return ItemGroup.Precursor;
+        if (typeName == PlainStorableType && def.Category == EItemCategory.Ingredient)
+            return ItemGroup.Chemical;
+        return ItemGroup.None;
     }
 
     /// <summary>
