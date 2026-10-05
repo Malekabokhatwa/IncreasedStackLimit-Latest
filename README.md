@@ -2,6 +2,8 @@
 
 A small [MelonLoader](https://github.com/LavaGang/MelonLoader) mod for **Schedule I** that raises item stack limits to 250. It's built for the current **0.4.7 beta (IL2CPP)**.
 
+> **Also part of [PocketPlug](https://github.com/Malekabokhatwa/PocketPlug).** PocketPlug is a quality-of-life mod with the same stack limits built in, plus a deal compass, a Bank app, dealer transfers and more. Use one or the other, not both.
+
 It started as a rewrite of froggy's *IncreasedStackLimit*, which no longer behaves correctly on 0.4.7. The main difference is *where* the limit gets changed:
 - **This mod** edits each item definition's own stack limit.
 - **The old mod** only overrode the value an item reports.
